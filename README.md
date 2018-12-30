@@ -32,7 +32,7 @@ Truly global objects:
 * setTimeout()
 * setInterval()
 
-Globals available in the scope of modules
+Globals available in the scope of modules: 
 
 * __dirname
 * __filename
@@ -93,7 +93,6 @@ addTwo(logNum)
 
 > **Note:** Had we not passed in a callback to our function we would have received undefined from our log because `readFile()` is
 asynchronous and we don't know when it completes, therefore logging our original un-incremented `num` variable as 0
-have retur
 ```javascript
 var fs = require('fs')
 var num = 0
@@ -123,7 +122,7 @@ fs.readFile('num.txt', 'utf8', function(err, numData) {
 ```
 
 Asynchronous programming with callbacks can be confusing and look unnecessarily complicated. You will get used to them if you apply
-yourself to learning this foundational concept in Node.js and JavaScript as a whole. This will allow us to have hundreds, or even 
+yourself to learning this foundational concept in Node.js and JavaScript as a whole. This will allow you to have hundreds, or even 
 thousands of pending requests and perform those blocking queries asynchronously.
 
 Here is the typical error callback convention in pseudo code:
@@ -141,6 +140,41 @@ function myAsyncOperation(foo, bar, baz, thenRunThisOperation) {
 }
 
 myAsyncOperation(param1, param2, function andThenRunThisOperation() {})
+```
+
+*PRO TIP: The callback pattern is essential to understand, but leads to deeply nested vertical code which can be hard to read and maintain.
+There are other ways to manage asynchronous complexity and avoid Callback Hell :)
+
+Use promises by the way of `utils.promisify(original)`
+```javascript
+const util = require('util')
+const fs = require('fs')
+
+const readFile = util.promisify(fs.readFile)
+
+readFile('num.txt', 'utf8').then((fileContents) => {
+  console.log(fileContents)
+}).catch((error) => {
+  console.log(error.message)
+})
+
+// => 2
+```
+
+Or, equivalently use the `async` function:
+```javascript
+const util = require('util')
+const fs = require('fs')
+
+const readFile = util.promisify(fs.readFile)
+
+async function callReadFile() {
+  const fileContents = await readFile('num.txt', 'utf8')
+  console.log(fileContents)
+}
+
+callReadFile()
+// => 2
 ```
 
 [View complete list](https://nodejs.org/api/globals.html)
