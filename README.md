@@ -19,6 +19,132 @@ libraries frameworks and NPM packages.
 
 Let's focus on just Node, not just focus but laser focus :)
 
+## Globals in Node.js
+Node.js has a variety of built-in global identifiers that you should be familiar with. Some of these are pure
+globals while others exist and are inherited at every module level, thus being pseudo-globals.
+
+Truly global objects:
+
+* console
+* global
+* process
+* URL
+* setTimeout()
+* setInterval()
+
+Globals available in the scope of modules
+
+* __dirname
+* __filename
+* module
+* exports
+* require
+
+## Callbacks
+Callbacks are essential to understand and are the building blocks upon which we write asynchronous code in JavaScript. Nearly
+everything in Node.js uses callbacks, which by the way, are not part of Node but the JavaScript language itself. I'm sure you're
+already familiar with them.
+
+In a synchronous program you would write something like this:
+```javascript
+var num = 0
+
+function addTwo() {
+  num += 2
+}
+
+addTwo()
+console.log(num)
+// => 2
+addTwo()
+console.log(num)
+// => 2
+```
+
+The code above runs sequentially, or from top to bottom When the function is invoked it adds two to our humble num variable - when
+`addTwo()` is invoked consecutively we can expect that each time it will simply add two to our `num` variable.
+ 
+In Node.js you would write your program asynchronously, in a non-blocking fashion. Let's take the `readFile()` function from the
+`fs` (file system) core module to do this.
+```javascript
+var fs = require('fs')
+var num = 0
+
+function addTwo(callback) {
+  fs.readFile('num.txt', 'utf8', function(err, numData) {
+    if (!err && numData) {
+      numData = parseInt(numData)
+      num += numData
+      callback()
+    }
+  })
+}
+
+// defining the callback function
+function logNum() {
+  console.log(num)
+}
+
+addTwo(logNum)
+// => 3
+addTwo(logNum)
+// => 5
+```
+
+> **Note:** Had we not passed in a callback to our function we would have received undefined from our log because `readFile()` is
+asynchronous and we don't know when it completes, therefore logging our original un-incremented `num` variable as 0
+have retur
+```javascript
+var fs = require('fs')
+var num = 0
+
+function addTwo() {
+  fs.readFile('num.txt', 'utf8', function(err, numData) {
+    if (!err && numData) {
+      numData = parseInt(numData)
+      num += numData
+    }
+  })
+}
+
+console.log(num)
+// => 0
+```
+
+> It's also worth noting that you can invoke `readFile()` without explicitly wrapping it in a function. In this case the signature
+of the function itself takes a callback:
+```javascript
+fs.readFile('num.txt', 'utf8', function(err, numData) {
+    if (!err && numData) {
+      numData = parseInt(numData)
+      num += numData
+    }
+  })
+```
+
+Asynchronous programming with callbacks can be confusing and look unnecessarily complicated. You will get used to them if you apply
+yourself to learning this foundational concept in Node.js and JavaScript as a whole. This will allow us to have hundreds, or even 
+thousands of pending requests and perform those blocking queries asynchronously.
+
+Here is the typical error callback convention in pseudo code:
+```javascript
+function myAsyncOperation(foo, bar, baz, thenRunThisOperation) {
+  // .. work
+  if (/* an error occurs */) { 
+    // callback
+    thenRunThisOperation(new Error("An error has occured"))
+  }
+  
+  // .. more body
+  // callback
+  thenRunThisOperation(d, e, null)
+}
+
+myAsyncOperation(param1, param2, function andThenRunThisOperation() {})
+```
+
+[View complete list](https://nodejs.org/api/globals.html)
+
 ## Passing in Command Line Arguments in Node.js
 Node applications accept command line arguments as strings of text. They are useful as they allow us to pass 
 additional information to a program when it is run through a CLI (command line interface).
