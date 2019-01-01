@@ -1,11 +1,12 @@
 # vanilla-node
-Learning to Node at it's core without installing any dependencies or packages. This repository (for now) will
-show examples of Node in it's vanilla and purest form, without relying on third-party NPM modules.
+Learning to Node at it's core without installing any dependencies or packages. This repository (for now) will concentrate
+on the fundamentals of Node in it's vanilla and purest form without increasing your cognitive load by having installing
+third party libraries etc and following long blog posts and tutorials.
 
-You will learn many of the core concepts in a syntactical fashion - we won't be adding much
-theory so understanding the core concepts behind Node like callback err pattern, blocking / non-blocking I/O,
-event driven applications (event loop) and the like will be up to you to absorb. I strongly suggest you do that with
-some reading as well as familiarizing yourself with the API.
+You will learn many of the core concepts in a syntactical fashion - we will refrain from adding too much theory surrounding
+the core concepts behind Node like callback err pattern, blocking / non-blocking I/O, event driven applications (event loop)
+and the like will be up to you to absorb. I strongly suggest you do that with some reading as well as familiarizing yourself
+with the API.
 
 * [About Node.js](https://nodejs.org/en/about/)
 * [Overview of Blocking vs Non-Blocking](https://nodejs.org/en/docs/guides/blocking-vs-non-blocking/)
@@ -14,8 +15,8 @@ some reading as well as familiarizing yourself with the API.
 
 The goal of this repo is to begin to understand Node and how it works at it's core and not the plethora of third party
 modules/tools within the ecosystem that have helped many new breed developers ramp up using Express, Mongoose, NPM. The 
-other side of Node's story is that as Node API has matured many developers have abandoned the API in favor of 3rd party
-libraries frameworks and NPM packages.
+flip side of Node's story is unfortunately as Node API has matured many developers have abandoned the API in favor of 3rd
+party libraries frameworks and NPM packages.
 
 Let's focus on just Node, not just focus but laser focus :)
 
@@ -40,6 +41,8 @@ Globals available in the scope of modules:
 * exports
 * require
 
+[View complete list](https://nodejs.org/api/globals.html)
+
 ## Callbacks
 Callbacks are essential to understand and are the building blocks upon which we write asynchronous code in JavaScript. Nearly
 everything in Node.js uses callbacks, which by the way, are not part of Node but the JavaScript language itself. I'm sure you're
@@ -47,7 +50,7 @@ already familiar with them.
 
 In a synchronous program you would write something like this:
 ```javascript
-var num = 0
+let num = 0
 
 function addTwo() {
   num += 2
@@ -67,8 +70,8 @@ The code above runs sequentially, or from top to bottom When the function is inv
 In Node.js you would write your program asynchronously, in a non-blocking fashion. Let's take the `readFile()` function from the
 `fs` (file system) core module to do this.
 ```javascript
-var fs = require('fs')
-var num = 0
+const fs = require('fs')
+let num = 0
 
 function addTwo(callback) {
   fs.readFile('num.txt', 'utf8', function(err, numData) {
@@ -94,8 +97,8 @@ addTwo(logNum)
 > **Note:** Had we not passed in a callback to our function we would have received undefined from our log because `readFile()` is
 asynchronous and we don't know when it completes, therefore logging our original un-incremented `num` variable as 0
 ```javascript
-var fs = require('fs')
-var num = 0
+const fs = require('fs')
+let num = 0
 
 function addTwo() {
   fs.readFile('num.txt', 'utf8', function(err, numData) {
@@ -131,7 +134,7 @@ function myAsyncOperation(foo, bar, baz, thenRunThisOperation) {
   // .. work
   if (/* an error occurs */) { 
     // callback
-    thenRunThisOperation(new Error("An error has occured"))
+    thenRunThisOperation(new Error('An error has occured'))
   }
   
   // .. more body
@@ -164,8 +167,7 @@ readFile('num.txt', 'utf8').then((fileContents) => {
 Or, equivalently use the `async` function:
 ```javascript
 const util = require('util')
-const fs = require('fs')
-
+const fs = require('fs'
 const readFile = util.promisify(fs.readFile)
 
 async function callReadFile() {
@@ -177,7 +179,117 @@ callReadFile()
 // => 2
 ```
 
-[View complete list](https://nodejs.org/api/globals.html)
+## Events
+Node.js is awesome for event-driven applications. In Node.js an event can be described as a string with a corresponding callback. 
+While callbacks are a one-to-one relationship between the caller and receiver, events are similar and have a many-to-many relationship.
+Events are a common programming pattern also commonly known as pub-sub or the observer pattern - node.js gives us a module called
+events which provides us `event-emitter` which we can then use to emit things (Node.js uses this under the hood for it's own events).
+
+This basic example demonstrates how the `on` method of the `EventEmitter` class has become part of the `http.Server` class. Again. at
+it's core Node.js uses events for many of their API's:
+
+```javascript
+const http = require('http')
+const server = http.createServer()
+
+server.on('request', function (req, res) {
+  res.end('This is the response')
+})
+
+server.listen(3001)
+```
+
+Below you'll find the most contrived example of using `EventEmitter` to emit events by just requiring the events module. We are using
+two main methods for events, `on` and `emit`. What's interesting in this example is that we have more than one listener assigned to 
+the `on` event, therefore calling all registered functions.
+```javascript
+const EventEmitter = require('events').EventEmitter
+const myEmitter = new EventEmitter()
+
+// register a listener
+myEmitter.on('someEvent', function() {
+  console.log('Event 1 has been fired')
+})
+
+// register another listener
+myEmitter.on('someEvent', function() {
+  console.log('Event 2 has been fired')
+})
+
+// fire the event
+eventEmitter.emit('someEvent')
+
+// => 'Event 1 has been fired'
+// => 'Event 2 has been fired'
+```
+
+It makes perfect sense that `EventEmitter` can be used within other modules. A more interesting approach would be to create a module
+that inherits from `EventEmitter`, so we can use it's functionality as part of the public API.
+
+```javascript
+/* 
+ * Module A
+ * user-list.js
+ */
+const EventEmitter = require('events').EventEmitter
+const util = require('util')
+
+let id = 1;
+const database = {
+  users: [
+    {id: id++, name: 'Teresa Mcadams',  occupation: 'Sr. Software Engineer'},
+    {id: id++, name: 'Hunter Joe',   occupation: 'Data Analyst'},
+    {id: id++, name: 'Cathy Alonso', occupation: 'Devops Engineer'}
+  ]
+}
+
+// our constructor function, ES5. one could easily create a class as well :/
+function UserList() {
+  EventEmitter.call(this)
+}
+
+// inherit it's prototype, add EventEmitter's prototype to UserList.prototype
+util.inherits(UserList, EventEmitter)
+
+// add method and emits the 'saved-user event'
+UserList.prototype.save = function (obj) {
+  obj.id = id++
+  database.users.push(obj)
+  this.emit('saved-user', obj);
+}
+
+UserList.prototype.all = function () {
+  return database.users
+}
+
+module.exports = UserList
+
+/* 
+ * Module B 
+ * test-user-list-env.js
+ */
+
+const UserList = require('./user-list')
+const users = new UserList()
+
+users.on('saved-user', function(user) {
+  console.log('user name saved: ' + user.name + ' (' + user.id + ')')
+})
+
+users.on('saved-user', function(user) {
+  console.log('user occupation: ' + user.occupation)
+})
+
+users.save({ name: 'Jason Frick', occupation: 'Project Manager' })
+console.log('<...next user...>')
+users.save({ name: 'Alyssa Bradley', occupation: 'Sr. SCRUM Master' })
+
+// => user name saved: Jason Frick (4)
+// => user occupation: Project Manager
+// => <...next user...>
+// => user name saved: Alyssa Bradley (5)
+// => user occupation: Sr. SCRUM Master
+```
 
 ## Passing in Command Line Arguments in Node.js
 Node applications accept command line arguments as strings of text. They are useful as they allow us to pass 
